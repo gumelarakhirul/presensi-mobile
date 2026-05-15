@@ -4,6 +4,36 @@ import { View, Text, SafeAreaView, StyleSheet } from "react-native";
 export default function DetailScreen({ route }) {
   const { data } = route.params;
 
+  // Format jam agar hanya menampilkan HH:mm:ss
+  const formatJam = (jam) => {
+    if (!jam) return "-";
+
+    // Jika format sudah HH:mm:ss
+    if (jam.length === 8 && jam.includes(":")) {
+      return jam;
+    }
+
+    // Jika format ISO: 2026-05-15T10:30:00.000Z
+    try {
+      const date = new Date(jam);
+
+      // Jika valid
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        });
+      }
+    } catch (error) {
+      console.log("Format jam error:", error);
+    }
+
+    // Fallback
+    return jam;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
@@ -47,7 +77,9 @@ export default function DetailScreen({ route }) {
 
         <View style={styles.row}>
           <Text style={styles.label}>Jam :</Text>
-          <Text style={styles.value}>{data.jamPresensi}</Text>
+          <Text style={styles.value}>
+            {formatJam(data.jamPresensi)}
+          </Text>
         </View>
 
         <View style={styles.row}>
