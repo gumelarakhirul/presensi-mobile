@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+
 import {
   View,
   Text,
@@ -6,36 +7,58 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
+
 import {
   CameraView,
   useCameraPermissions,
 } from "expo-camera";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AboutScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [permission, requestPermission] =
+    useCameraPermissions();
+
+  const [isCameraOpen, setIsCameraOpen] =
+    useState(false);
+
+  const [mahasiswa, setMahasiswa] =
+    useState(null);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
 
   const cameraRef = useRef(null);
 
-  const STORAGE_KEY = "@profile_photo";
+  const NIM_USER = "0920240027";
 
-  // Load foto dari AsyncStorage
+  const BASE_URL =
+    "http://10.1.14.35:8080/api/mahasiswa";
+
+  // Load data mahasiswa
   useEffect(() => {
-    loadProfilePhoto();
+    fetchMahasiswa();
   }, []);
 
-  const loadProfilePhoto = async () => {
+  // GET mahasiswa
+  const fetchMahasiswa = async () => {
     try {
-      const savedPhotoUri = await AsyncStorage.getItem(STORAGE_KEY);
+      const response = await fetch(
+        `${BASE_URL}/${NIM_USER}`
+      );
 
-      if (savedPhotoUri !== null) {
-        setProfilePhoto(savedPhotoUri);
+      if (response.ok) {
+        const data = await response.json();
+
+        setMahasiswa(data);
+      } else {
+        Alert.alert(
+          "Data Tidak Ditemukan",
+          "NIM belum ada di database."
+        );
       }
     } catch (error) {
-      console.log("Gagal memuat foto profil:", error);
+      console.log(error);
     }
   };
 
@@ -44,45 +67,107 @@ export default function AboutScreen() {
     if (!cameraRef.current) return;
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.5,
-      });
+      const photo =
+        await cameraRef.current.takePictureAsync({
+          quality: 0.3,
+        });
 
-      setProfilePhoto(photo.uri);
-
-      await AsyncStorage.setItem(STORAGE_KEY, photo.uri);
-
-      setIsCameraOpen(false);
-
-      Alert.alert("Berhasil", "Foto profil berhasil diperbarui.");
+      uploadPhoto(photo.uri);
     } catch (error) {
-      Alert.alert("Error", "Gagal mengambil foto.");
+      Alert.alert(
+        "Error",
+        "Gagal mengambil foto."
+      );
     }
   };
 
-  // Buka kamera
-  const openCamera = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
+  // Upload foto
+  const uploadPhoto = async (uri) => {
+    setIsLoading(true);
 
-      if (!result.granted) {
-        Alert.alert(
-          "Izin Ditolak",
-          "Aplikasi membutuhkan akses kamera."
-        );
-        return;
+    const formData = new FormData();
+
+    formData.append("nim", NIM_USER);
+
+    formData.append(
+      "nama",
+      "Gumelar A.R"
+    );
+
+    formData.append("foto", {
+      uri: uri,
+      name: "selfie.jpg",
+      type: "image/jpeg",
+    });
+
+    try {
+    const response = await fetch(
+      `${BASE_URL}/upload`,
+      {
+        method: "POST",
+        body: formData,
       }
-    }
+    );
 
-    setIsCameraOpen(true);
+      if (response.ok) {
+        Alert.alert(
+          "Sukses",
+          "Foto profil berhasil upload!"
+        );
+
+        fetchMahasiswa();
+      } else {
+        Alert.alert(
+          "Gagal",
+          "Upload foto gagal."
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "Gagal upload ke server."
+      );
+    } finally {
+      setIsLoading(false);
+      setIsCameraOpen(false);
+    }
   };
+
+  // Loading
+  if (isLoading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        style={{ flex: 1 }}
+      />
+    );
+  }
 
   // Render kamera
   if (isCameraOpen) {
     if (!permission) {
       return (
         <View style={styles.container}>
-          <Text>Memuat perizinan kamera...</Text>
+          <Text>Memuat permission...</Text>
+        </View>
+      );
+    }
+
+    if (!permission.granted) {
+      return (
+        <View style={styles.container}>
+          <Text style={styles.infoText}>
+            Kami membutuhkan akses kamera.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={requestPermission}
+          >
+            <Text style={styles.buttonText}>
+              Beri Izin Kamera
+            </Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -90,67 +175,75 @@ export default function AboutScreen() {
     return (
       <View style={styles.container}>
         <CameraView
-          ref={cameraRef}
           style={StyleSheet.absoluteFillObject}
           facing="front"
+          ref={cameraRef}
         >
           <View style={styles.cameraOverlay}>
-            <View style={styles.captureContainer}>
-              <TouchableOpacity
-                style={styles.captureButton}
-                onPress={takePicture}
-              >
-                <Text style={styles.captureButtonText}>
-                  Jepret
-                </Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={takePicture}
+            >
+              <Text style={styles.captureButtonText}>
+                Ambil & Kirim
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setIsCameraOpen(false)}
-              >
-                <Text style={styles.buttonText}>Batal</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() =>
+                setIsCameraOpen(false)
+              }
+            >
+              <Text style={styles.cancelText}>
+                Batal
+              </Text>
+            </TouchableOpacity>
           </View>
         </CameraView>
       </View>
     );
   }
 
-  // Render halaman profile
+  // Render halaman About
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
-        <View style={styles.imageContainer}>
-          {profilePhoto ? (
-            <Image
-              source={{ uri: profilePhoto }}
-              style={styles.profileImage}
-            />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>
-                Belum Ada Foto
-              </Text>
-            </View>
-          )}
-        </View>
+        <Image
+          source={
+            mahasiswa?.fotoMhs
+              ? {
+                  uri:
+                    `data:image/jpeg;base64,${mahasiswa.fotoMhs}`,
+                }
+              : {
+                  uri:
+                    "https://i.pravatar.cc/150?img=3",
+                }
+          }
+          style={styles.profileImage}
+        />
 
-        <Text style={styles.nameText}>Agum</Text>
-        <Text style={styles.nimText}>NIM: 0920240027</Text>
+        <Text style={styles.nameText}>
+          {mahasiswa?.namaMhs ||
+            "Gumelar A.R"}
+        </Text>
+
+        <Text style={styles.nimText}>
+          {NIM_USER}
+        </Text>
+
         <Text style={styles.programText}>
           Teknologi Rekayasa Perangkat Lunak
         </Text>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={openCamera}
+          onPress={() =>
+            setIsCameraOpen(true)
+          }
         >
           <Text style={styles.buttonText}>
-            {profilePhoto
-              ? "Ganti Foto Profil"
-              : "Ambil Foto Profil"}
+            Ganti Foto Selfie
           </Text>
         </TouchableOpacity>
       </View>
@@ -166,7 +259,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // Profile Card
   profileCard: {
     backgroundColor: "white",
     width: "85%",
@@ -179,33 +271,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
 
-  imageContainer: {
-    marginBottom: 20,
-  },
-
   profileImage: {
     width: 150,
     height: 150,
     borderRadius: 75,
     borderWidth: 3,
     borderColor: "#0056A3",
-  },
-
-  placeholderImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: "#e9ecef",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: "#ced4da",
-    borderStyle: "dashed",
-  },
-
-  placeholderText: {
-    color: "#6c757d",
-    fontWeight: "bold",
+    marginBottom: 20,
   },
 
   nameText: {
@@ -244,16 +316,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // Camera
   cameraOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-  },
-
-  captureContainer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginBottom: 40,
+    alignItems: "center",
   },
 
   captureButton: {
@@ -262,6 +328,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 30,
     elevation: 5,
+    marginBottom: 20,
   },
 
   captureButtonText: {
@@ -270,10 +337,13 @@ const styles = StyleSheet.create({
     color: "black",
   },
 
-  cancelButton: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 30,
+  cancelText: {
+    color: "white",
+    marginBottom: 20,
+  },
+
+  infoText: {
+    textAlign: "center",
+    marginBottom: 20,
   },
 });
