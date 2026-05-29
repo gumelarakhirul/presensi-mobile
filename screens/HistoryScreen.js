@@ -12,7 +12,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
 
-const BASE_URL = "http://10.49.227.175:8080/api/presensi";
+const BASE_URL = "http://172.20.10.2:8080/api/presensi";
 
 export default function HistoryScreen({ navigation }) {
   const { userData } = useContext(AuthContext);

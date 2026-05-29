@@ -33,7 +33,7 @@ export default function AboutScreen() {
   const NIM_USER = "0920240027";
 
   const BASE_URL =
-    "http://10.1.14.35:8080/api/mahasiswa";
+    "http://172.20.10.2:8080/api/mahasiswa";
 
   // Load data mahasiswa
   useEffect(() => {

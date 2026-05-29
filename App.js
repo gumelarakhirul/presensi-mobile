@@ -9,6 +9,7 @@ import HomeScreen from "./screens/HomeScreen";
 import HistoryScreen from "./screens/HistoryScreen";
 import DetailScreen from "./screens/DetailScreen";
 import AboutScreen from "./screens/AboutScreen";
+import LocationScreen from "./screens/LocationScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -37,25 +38,27 @@ export default function App() {
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={({ route }) => ({
-            tabBarIcon: ({ color, size }) => {
-              let iconName;
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
 
-              if (route.name === "Home") {
-                iconName = "home";
-              } else if (route.name === "History") {
-                iconName = "history";
-              } else if (route.name === "About") {
-                iconName = "person";
-              }
+            if (route.name === "Home") {
+              iconName = "home";
+            } else if (route.name === "History") {
+              iconName = "history";
+            } else if (route.name === "About") {
+              iconName = "person";
+            } else if (route.name === "Location") {
+              iconName = "location-on";
+            }
 
-              return (
-                <MaterialIcons
-                  name={iconName}
-                  size={size}
-                  color={color}
-                />
-              );
-            },
+            return (
+              <MaterialIcons
+                name={iconName}
+                size={size}
+                color={color}
+              />
+            );
+          },
             tabBarActiveTintColor: "#0056A0",
             tabBarInactiveTintColor: "gray",
           })}
@@ -84,6 +87,13 @@ export default function App() {
               title: "Tentang",
             }}
           />
+          <Tab.Screen
+          name="Location"
+          component={LocationScreen}
+          options={{
+            title: "Lokasi",
+          }}
+        />
         </Tab.Navigator>
       </NavigationContainer>
     </AuthProvider>

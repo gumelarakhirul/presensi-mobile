@@ -15,7 +15,7 @@ import {
   useCameraPermissions,
 } from "expo-camera";
 
-const BASE_URL = "http://10.49.227.175:8080/api/presensi";
+const BASE_URL = "http://172.20.10.2:8080/api/presensi";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
