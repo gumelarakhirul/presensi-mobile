@@ -30,7 +30,7 @@ export default function AboutScreen() {
 
   const cameraRef = useRef(null);
 
-  const NIM_USER = "0920240027";
+  const NIM_USER = "0920240020";
 
   const BASE_URL =
     "http://172.20.10.2:8080/api/mahasiswa";
@@ -91,7 +91,7 @@ export default function AboutScreen() {
 
     formData.append(
       "nama",
-      "Gumelar A.R"
+      "M Farrel Ash-shieddieq Irsan"
     );
 
     formData.append("foto", {
@@ -225,7 +225,7 @@ export default function AboutScreen() {
 
         <Text style={styles.nameText}>
           {mahasiswa?.namaMhs ||
-            "Gumelar A.R"}
+            "M Farrel Ash-shieddieq Irsan"}
         </Text>
 
         <Text style={styles.nimText}>
